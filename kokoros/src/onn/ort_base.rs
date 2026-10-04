@@ -39,7 +39,7 @@ pub trait OrtBase {
 
 
         #[cfg(all(not(feature = "cuda")))]
-        let providers = [CPUExecutionProvider::default().build()];
+        let providers = [CPUExecutionProvider::default().with_arena_allocator(false).build()];
         match SessionBuilder::new() {
             Ok(mut builder) => {
                 let is_cpu = is_cpu_execution_provider();
@@ -54,6 +54,8 @@ pub trait OrtBase {
                     );
 
                     builder = builder
+                        .with_memory_pattern(false)
+                        .map_err(|e| format!("Failed to disable memory pattern: {}", e))?
                         .with_config_entry("session.use_mimalloc", "1")
                         .map_err(|e| format!("Failed to set mimalloc: {}", e))?
                         .with_intra_threads(optimal_threads)  // Distribute cores across instances
